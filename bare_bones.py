@@ -25,31 +25,34 @@ metadata = {
 def run(protocol: protocol_api.ProtocolContext):
 
     """ load labware """
-    my_plate = protocol.load_labware('corning_96_wellplate_360ul_flat', '11')
-    my_tiprack = protocol.load_labware('opentrons_96_tiprack_300ul', '6')
+    pcr_plate = protocol.load_labware('biorad_96_wellplate_200ul_pcr', '6')
+    MTP = protocol.load_labware('nest_96_wellplate_200ul_flat', '9')
+    my_tiprack = protocol.load_labware('opentrons_96_tiprack_300ul', '11')
     
 
     """ Variables"""
     # numSamps is the number of samples and should be 1-96 (int)
+    NUMBER_OF_ROWS = 1
 
     """ load pipettes """
-    p300 = protocol.load_instrument('p300_single', 'right', tip_racks=[my_tiprack])
+    p300 = protocol.load_instrument('p300_multi', 'right', tip_racks=[my_tiprack])
 
     """ helper functions """
     # def my_helper_fxn():
     #     protocol.comment('I am helping!')
+    def transfer_simple(volume, source_row, destination_row):
+        p300.flow_rate.aspirate = 120
+        p300.mix(volume, 3, source_row)
+        p300.aspirate(volume, source_row.bottom(1))
+        p300.dispense(volume, destination_row.bottom(5))
+        p300.blow_out()
+
 
     """ liquid transfer commands """
-    # p300.transfer(100, my_plate.wells()[0], my_plate.wells()[1])
-    # p300.transfer(100, my_plate['A1'], my_plate['B2'])
-    
-    p300.pick_up_tip()
-    p300.aspirate(100, my_plate['A1'])
-    p300.dispense(100, my_plate['B1'])
-    p300.drop_tip()
-
-    for well in my_plate.wells():
-        print(well)
+    for i in range(NUMBER_OF_ROWS):
+        p300.pick_up_tip()
+        transfer_simple(100, MTP.rows()[0][i], pcr_plate.rows()[0][i])
+        p300.drop_tip()
     # print(my_plate.columns()[0][0])
 
 
